@@ -18,6 +18,7 @@ export type JerseyConfig = {
     | "handball";
   primary?: string;
   secondary?: string;
+  tertiary?: string;
   stripesPreset?: StripePreset;
   horizontalStripesPreset?: HorizontalStripePreset;
   customShapePreset?: CustomShapePreset;
@@ -33,8 +34,10 @@ export type JerseyConfig = {
   stripePrimaryColor?: string;
   stripeSecondaryColor?: string;
   stripeTertiaryColor?: string;
+  stripeQuaternaryColor?: string;
   sleeveStripePrimaryColor?: string;
   sleeveStripeSecondaryColor?: string;
+  sleeveStripeTertiaryColor?: string;
   sideStripePrimaryColor?: string;
   sideStripeSecondaryColor?: string;
   customOverlayEnabled?: boolean;
@@ -142,6 +145,7 @@ export function parseJerseyConfig(raw: unknown): JerseyConfig {
         : undefined,
     primary: coerceString(payload.primary),
     secondary: coerceString(payload.secondary),
+    tertiary: coerceString(payload.tertiary),
     stripesPreset: coercePreset(payload.stripesPreset, STRIPE_PRESETS),
     horizontalStripesPreset: coercePreset(
       payload.horizontalStripesPreset,
@@ -186,12 +190,19 @@ export function parseJerseyConfig(raw: unknown): JerseyConfig {
     stripeTertiaryColor: coerceString(
       payload.stripeTertiaryColor ?? nestedState?.stripeTertiaryColor,
     ),
+    stripeQuaternaryColor: coerceString(
+      payload.stripeQuaternaryColor ?? nestedState?.stripeQuaternaryColor,
+    ),
     sleeveStripePrimaryColor: coerceString(
       payload.sleeveStripePrimaryColor ?? nestedState?.sleeveStripePrimaryColor,
     ),
     sleeveStripeSecondaryColor: coerceString(
       payload.sleeveStripeSecondaryColor ??
         nestedState?.sleeveStripeSecondaryColor,
+    ),
+    sleeveStripeTertiaryColor: coerceString(
+      payload.sleeveStripeTertiaryColor ??
+        nestedState?.sleeveStripeTertiaryColor,
     ),
     sideStripePrimaryColor: coerceString(
       payload.sideStripePrimaryColor ?? nestedState?.sideStripePrimaryColor,

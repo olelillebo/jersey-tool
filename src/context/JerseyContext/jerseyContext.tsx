@@ -101,6 +101,11 @@ function clearActiveDraft(id: string, sport: JerseySport) {
   }
 }
 
+function clearActiveDraftForSport(sport: JerseySport) {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(getActiveDraftKey(sport));
+}
+
 function saveDraft(state: JerseyColorState, sport: JerseySport): string | null {
   if (typeof window === "undefined") return null;
   const trimmedName = state.name.trim();
@@ -163,7 +168,12 @@ function getDraftByName(
 function hasInitialContent(initial?: Partial<JerseyColorState> | null) {
   if (!initial) return false;
   if (initial.name?.trim()) return true;
-  if (initial.theme?.primary || initial.theme?.secondary) return true;
+  if (
+    initial.theme?.primary ||
+    initial.theme?.secondary ||
+    initial.theme?.tertiary
+  )
+    return true;
   if (
     initial.stripesPreset ||
     initial.horizontalStripesPreset ||
@@ -204,8 +214,10 @@ function hasInitialContent(initial?: Partial<JerseyColorState> | null) {
     !!initial.stripePrimaryColor?.enabled ||
     !!initial.stripeSecondaryColor?.enabled ||
     !!initial.stripeTertiaryColor?.enabled ||
+    !!initial.stripeQuaternaryColor?.enabled ||
     !!initial.sleeveStripePrimaryColor?.enabled ||
     !!initial.sleeveStripeSecondaryColor?.enabled ||
+    !!initial.sleeveStripeTertiaryColor?.enabled ||
     !!initial.sideStripePrimaryColor?.enabled ||
     !!initial.sideStripeSecondaryColor?.enabled
   );
@@ -221,7 +233,7 @@ const initialState: JerseyColorState = {
   sport: undefined,
   sr_jersey: undefined,
   id: undefined,
-  theme: { primary: "#000000", secondary: "#FFFFFF" },
+  theme: { primary: "#C8102E", secondary: "#303030", tertiary: "#FFFFFF" },
   baseColor: { value: undefined, enabled: false, shouldToggle: true },
   leftSleeveColor: { value: undefined, enabled: false, shouldToggle: true },
   rightSleeveColor: { value: undefined, enabled: false, shouldToggle: true },
@@ -257,12 +269,22 @@ const initialState: JerseyColorState = {
     enabled: false,
     shouldToggle: true,
   },
+  stripeQuaternaryColor: {
+    value: undefined,
+    enabled: false,
+    shouldToggle: true,
+  },
   sleeveStripePrimaryColor: {
     value: undefined,
     enabled: false,
     shouldToggle: true,
   },
   sleeveStripeSecondaryColor: {
+    value: undefined,
+    enabled: false,
+    shouldToggle: true,
+  },
+  sleeveStripeTertiaryColor: {
     value: undefined,
     enabled: false,
     shouldToggle: true,
@@ -346,7 +368,28 @@ function resetPreservingIdentity(prev: JerseyColorState): JerseyColorState {
 function deriveDefault(
   field: JerseyFieldKey,
   theme: Theme,
+  baseEnabled = false,
 ): string | undefined {
+  if (baseEnabled) {
+    if (
+      field === "stripePrimaryColor" ||
+      field === "sleeveStripePrimaryColor" ||
+      field === "sleeveStripeTertiaryColor" ||
+      field === "sideStripePrimaryColor"
+    ) {
+      return theme.secondary ?? theme.primary;
+    }
+    if (
+      field === "stripeSecondaryColor" ||
+      field === "sleeveStripeSecondaryColor" ||
+      field === "sideStripeSecondaryColor"
+    ) {
+      return theme.tertiary ?? theme.secondary ?? theme.primary;
+    }
+    if (DEFAULT_SOURCE[field] === "secondary") {
+      return theme.tertiary ?? theme.secondary;
+    }
+  }
   const which = DEFAULT_SOURCE[field];
   return theme[which];
 }
@@ -439,22 +482,38 @@ function reducer(state: JerseyColorState, action: Action): JerseyColorState {
       const { value } = action;
       return {
         ...state,
-
         horizontalStripesPreset: value,
         stripesPreset: undefined,
         customShapePreset: undefined,
         sideStripePreset: undefined,
+        stripeTertiaryColor: {
+          ...state.stripeTertiaryColor,
+          value: undefined,
+          enabled: false,
+        },
+        stripeQuaternaryColor: {
+          ...state.stripeQuaternaryColor,
+          value: undefined,
+          enabled: false,
+        },
       } as JerseyColorState;
     }
     case "setCustomShapeTemplate": {
       const { value } = action;
       return {
         ...state,
-
         customShapePreset: value,
         stripesPreset: undefined,
         horizontalStripesPreset: undefined,
         sideStripePreset: undefined,
+        stripeTertiaryColor:
+          value === "hockeyThinArrowFill"
+            ? {
+                ...state.stripeTertiaryColor,
+                value: undefined,
+                enabled: false,
+              }
+            : state.stripeTertiaryColor,
       } as JerseyColorState;
     }
     case "setSideStripeTemplate": {
@@ -676,6 +735,10 @@ function mergeInitial(
       ...base.stripeTertiaryColor,
       ...(patch.stripeTertiaryColor ?? {}),
     },
+    stripeQuaternaryColor: {
+      ...base.stripeQuaternaryColor,
+      ...(patch.stripeQuaternaryColor ?? {}),
+    },
     sleeveStripePrimaryColor: {
       ...base.sleeveStripePrimaryColor,
       ...(patch.sleeveStripePrimaryColor ?? {}),
@@ -683,6 +746,10 @@ function mergeInitial(
     sleeveStripeSecondaryColor: {
       ...base.sleeveStripeSecondaryColor,
       ...(patch.sleeveStripeSecondaryColor ?? {}),
+    },
+    sleeveStripeTertiaryColor: {
+      ...base.sleeveStripeTertiaryColor,
+      ...(patch.sleeveStripeTertiaryColor ?? {}),
     },
     sideStripePrimaryColor: {
       ...base.sideStripePrimaryColor,
@@ -792,7 +859,12 @@ const JerseyColorsProvider: React.FC<{
   const persistDraft = React.useCallback(() => {
     if (!state.sport) return;
     const trimmedName = state.name.trim();
-    if (!trimmedName) return;
+    if (!trimmedName) {
+      savedDraftIdRef.current = undefined;
+      clearActiveDraftForSport(state.sport);
+      refreshDrafts();
+      return;
+    }
 
     const nextId = saveDraft(state, state.sport);
     if (!nextId) return;
@@ -815,6 +887,14 @@ const JerseyColorsProvider: React.FC<{
     return () => window.clearTimeout(timeoutId);
   }, [isNameEditing, persistDraft]);
 
+  React.useEffect(() => {
+    if (!state.sport) return;
+    if (state.name.trim()) return;
+    savedDraftIdRef.current = undefined;
+    clearActiveDraftForSport(state.sport);
+    refreshDrafts();
+  }, [refreshDrafts, state.name, state.sport]);
+
   const isConfigured = React.useMemo(() => {
     return (
       JSON.stringify(stripIgnored(state)) !==
@@ -830,11 +910,18 @@ const JerseyColorsProvider: React.FC<{
     setColor: (key, value) => dispatch({ type: "setColor", key, value }),
     setThemeColor: (which, value) =>
       dispatch({ type: "setThemeColor", which, value }),
-    reset: () => dispatch({ type: "reset" }),
+    reset: () => {
+      if (state.sport) {
+        savedDraftIdRef.current = undefined;
+        clearActiveDraftForSport(state.sport);
+        refreshDrafts();
+      }
+      dispatch({ type: "reset" });
+    },
     effective: (key) => {
       const { enabled, value } = state[key];
       if (!enabled) return undefined;
-      return value ?? deriveDefault(key, state.theme); // baseColor derives from theme.primary
+      return value ?? deriveDefault(key, state.theme, state.baseColor.enabled); // baseColor derives from theme.primary
     },
     setSvgRef: (el) => {
       svgRef.current = el;

@@ -16,20 +16,32 @@ type ColorSwitcherProps = {
     field: JerseyFieldKey | "primary" | "secondary",
     color: string,
   ) => void;
+  linkedPrimaryFields?: Array<{
+    field: JerseyFieldKey | "primary" | "secondary";
+    color?: string;
+  }>;
 };
 
 export const ColorSwitcher: React.FC<ColorSwitcherProps> = ({
   primaryColor,
   secondaryColor,
   setColor,
+  linkedPrimaryFields,
 }) => {
   const breakpoint = useBreakpoint();
   //create a function that switches the colors of the provided fields
   const switchColors = () => {
     if (!primaryColor.color || !secondaryColor.color || !setColor) return; //only support switching between two fields for now
+    const nextPrimaryColor = secondaryColor.color;
+    const nextSecondaryColor = primaryColor.color;
 
-    setColor(primaryColor.field, secondaryColor.color);
-    setColor(secondaryColor.field, primaryColor.color);
+    setColor(primaryColor.field, nextPrimaryColor);
+    setColor(secondaryColor.field, nextSecondaryColor);
+    linkedPrimaryFields?.forEach((linkedField) => {
+      if (linkedField.color === nextSecondaryColor) {
+        setColor(linkedField.field, nextPrimaryColor);
+      }
+    });
   };
 
   return (

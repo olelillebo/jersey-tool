@@ -85,3 +85,32 @@ export function darken(hex: string, amt = 0.15): string {
 
   return `#${toHex(R)}${toHex(G)}${toHex(B)}`;
 }
+
+export function lighten(hex: string, amt = 0.15): string {
+  const c = normalizeHex(hex);
+  const n = parseInt(c, 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+
+  const { h, s, l } = rgbToHsl(r, g, b);
+  const l2 = clamp01(l + amt);
+  const { r: R, g: G, b: B } = hslToRgb(h, s, l2);
+
+  return `#${toHex(R)}${toHex(G)}${toHex(B)}`;
+}
+
+export function getContrastingShade(
+  hex: string,
+  amt = 0.2,
+  darkThreshold = 0.1
+): string {
+  const c = normalizeHex(hex);
+  const n = parseInt(c, 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  const { l } = rgbToHsl(r, g, b);
+
+  return l <= darkThreshold ? lighten(hex, amt) : darken(hex, amt);
+}

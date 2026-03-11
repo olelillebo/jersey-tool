@@ -29,6 +29,7 @@ function Setting({
   const {
     state,
     setEnabled,
+    setColor,
     clearTemplate,
     openTemplateSection,
     setOpenTemplateSection,
@@ -118,9 +119,23 @@ function Setting({
         if (openTemplateSection === templateKey) {
           setOpenTemplateSection(undefined);
         }
+        keys.forEach((k) => setColor(k, undefined));
+      } else {
+        keys.forEach((k) => setEnabled(k, false));
       }
-      keys.forEach((k) => setEnabled(k, false));
     } else {
+      const accentPrimaryColor = state.baseColor.enabled
+        ? state.theme.secondary ?? state.theme.primary
+        : state.theme.primary;
+      const accentSecondaryColor = state.baseColor.enabled
+        ? state.theme.tertiary ??
+          state.theme.secondary ??
+          state.theme.primary
+        : state.theme.secondary;
+      const collarColor = accentPrimaryColor;
+      const sleeveColor = accentPrimaryColor;
+      const shoulderPanelColor = accentPrimaryColor;
+
       if (templateKey) {
         setOpenTemplateSection(templateKey);
       }
@@ -140,6 +155,71 @@ function Setting({
         clearTemplate("sidestripe");
       }
       keys.forEach((k) => state[k].shouldToggle && setEnabled(k, true));
+      if (
+        (label === "Sleeves" || label === "Sleeve Detail") &&
+        !templateKey &&
+        sleeveColor
+      ) {
+        if (label === "Sleeve Detail" && state.sport === "hockey") {
+          return;
+        }
+        keys.forEach((key) => {
+          if (!state[key].enabled) {
+            setColor(key, sleeveColor);
+          }
+        });
+      }
+      if (
+        label === "Collar" &&
+        !templateKey &&
+        !state.neckCircleColor.enabled &&
+        collarColor
+      ) {
+        setColor("neckCircleColor", collarColor);
+      }
+      if (
+        label === "Shoulder Panel" &&
+        !templateKey &&
+        !state.shoulderPanelColor.enabled &&
+        shoulderPanelColor
+      ) {
+        setColor("shoulderPanelColor", shoulderPanelColor);
+      }
+      if (
+        (templateKey === "vertical" ||
+          templateKey === "horizontal" ||
+          templateKey === "custom") &&
+        !state.stripePrimaryColor.enabled &&
+        accentPrimaryColor
+      ) {
+        setColor("stripePrimaryColor", accentPrimaryColor);
+      }
+      if (
+        (templateKey === "vertical" || templateKey === "horizontal") &&
+        !state.stripeSecondaryColor.enabled &&
+        accentSecondaryColor
+      ) {
+        setColor("stripeSecondaryColor", accentSecondaryColor);
+      }
+      if (
+        templateKey === "horizontal" &&
+        state.sport === "hockey" &&
+        !state.stripeTertiaryColor.enabled &&
+        accentPrimaryColor
+      ) {
+        setColor("stripeTertiaryColor", accentPrimaryColor);
+      }
+      if (
+        templateKey === "sidestripe" &&
+        accentPrimaryColor
+      ) {
+        if (!state.sideStripePrimaryColor.enabled) {
+          setColor("sideStripePrimaryColor", accentPrimaryColor);
+        }
+        if (!state.sideStripeSecondaryColor.enabled) {
+          setColor("sideStripeSecondaryColor", accentPrimaryColor);
+        }
+      }
     }
   };
 

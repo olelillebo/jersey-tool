@@ -10,8 +10,10 @@ export type JerseyFieldKey =
   | "stripePrimaryColor"
   | "stripeSecondaryColor"
   | "stripeTertiaryColor"
+  | "stripeQuaternaryColor"
   | "sleeveStripePrimaryColor"
   | "sleeveStripeSecondaryColor"
+  | "sleeveStripeTertiaryColor"
   | "sideStripePrimaryColor"
   | "sideStripeSecondaryColor";
 
@@ -20,7 +22,7 @@ export type ColorToggle = {
   enabled: boolean;
   shouldToggle?: boolean;
 };
-export type Theme = { primary?: string; secondary?: string };
+export type Theme = { primary?: string; secondary?: string; tertiary?: string };
 
 export type JerseyColorState = {
   name: string;
@@ -75,8 +77,10 @@ export const DEFAULT_SOURCE: Record<JerseyFieldKey, keyof Theme> = {
   stripePrimaryColor: "primary",
   stripeSecondaryColor: "secondary",
   stripeTertiaryColor: "primary",
+  stripeQuaternaryColor: "primary",
   sleeveStripePrimaryColor: "primary",
   sleeveStripeSecondaryColor: "secondary",
+  sleeveStripeTertiaryColor: "primary",
   sideStripePrimaryColor: "primary",
   sideStripeSecondaryColor: "primary",
 };
@@ -180,8 +184,10 @@ export type JerseyResponse = {
   stripePrimaryColor?: string;
   stripeSecondaryColor?: string;
   stripeTertiaryColor?: string;
+  stripeQuaternaryColor?: string;
   sleeveStripePrimaryColor?: string;
   sleeveStripeSecondaryColor?: string;
+  sleeveStripeTertiaryColor?: string;
   sideStripePrimaryColor?: string;
   sideStripeSecondaryColor?: string;
   stripesPreset?: StripePreset;
@@ -216,6 +222,7 @@ export type StripeColors = {
   stripePrimaryColor?: string;
   stripeSecondaryColor?: string;
   stripeTertiaryColor?: string;
+  stripeQuaternaryColor?: string;
 };
 
 export type SideStripeColors = {

@@ -29,8 +29,10 @@ type JerseyProps = React.SVGProps<SVGSVGElement> & {
   stripePrimaryColor?: string;
   stripeSecondaryColor?: string;
   stripeTertiaryColor?: string;
+  stripeQuaternaryColor?: string;
   sleeveStripePrimaryColor?: string;
   sleeveStripeSecondaryColor?: string;
+  sleeveStripeTertiaryColor?: string;
   sideStripePrimaryColor?: string;
   sideStripeSecondaryColor?: string;
   customOverlayEnabled?: boolean;
@@ -84,8 +86,10 @@ const Base: React.FC<JerseyProps> = ({
   stripePrimaryColor,
   stripeSecondaryColor,
   stripeTertiaryColor,
+  stripeQuaternaryColor,
   sleeveStripePrimaryColor,
   sleeveStripeSecondaryColor,
+  sleeveStripeTertiaryColor,
   sideStripePrimaryColor,
   sideStripeSecondaryColor,
   customOverlayEnabled = false,
@@ -407,6 +411,15 @@ const Base: React.FC<JerseyProps> = ({
 
             {isHockey ? (
               <>
+                {leftSleeveDetailColor ? (
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M2.00174 19L9.00174 20V27L2.00174 26V19Z"
+                    fill={leftSleeveDetailColor}
+                  />
+                ) : null}
+
                 {leftSleeveColor ? (
                   <path
                     fillRule="evenodd"
@@ -427,7 +440,9 @@ const Base: React.FC<JerseyProps> = ({
                       fillRule="evenodd"
                       clipRule="evenodd"
                       d="M1.99948 13L8.99948 14V16L1.99948 15V13Z"
-                      fill={sleeveStripePrimaryColor}
+                      fill={
+                        sleeveStripeTertiaryColor ?? sleeveStripePrimaryColor
+                      }
                     />
                   </>
                 ) : null}
@@ -487,6 +502,14 @@ const Base: React.FC<JerseyProps> = ({
 
             {isHockey ? (
               <>
+                {rightSleeveDetailColor ? (
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M33.0017 19L26.0017 20V27L33.0017 26V19Z"
+                    fill={rightSleeveDetailColor}
+                  />
+                ) : null}
                 {rightSleeveColor ? (
                   <path
                     fillRule="evenodd"
@@ -507,7 +530,9 @@ const Base: React.FC<JerseyProps> = ({
                       fillRule="evenodd"
                       clipRule="evenodd"
                       d="M32.9995 13L25.9995 14V16L32.9995 15V13Z"
-                      fill={sleeveStripePrimaryColor}
+                      fill={
+                        sleeveStripeTertiaryColor ?? sleeveStripePrimaryColor
+                      }
                     />
                   </>
                 ) : null}
@@ -580,9 +605,11 @@ const Base: React.FC<JerseyProps> = ({
           renderHorizontalStripePreset(
             horizontalStripesPreset,
             {
+              baseColor,
               stripePrimaryColor,
               stripeSecondaryColor,
               stripeTertiaryColor,
+              stripeQuaternaryColor,
             },
             variant,
           )}

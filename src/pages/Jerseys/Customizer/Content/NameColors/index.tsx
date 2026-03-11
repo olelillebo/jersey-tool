@@ -1,10 +1,10 @@
 import { useJerseyColors } from "@/context/JerseyContext";
-import { ColorSwitcher } from "@/components/ColorSwitcher";
 import ColorPickerComponent from "@/components/ColorPicker";
 import type { Theme } from "@/types/types";
 import ColorSelect from "@/components/ColorSelect";
-import { Input } from "@heroui/react";
+import { Button, Input } from "@heroui/react";
 import { classNames } from "@/utils/utils";
+import { MaterialIcon } from "@/components/MaterialIcon";
 
 export function NameColors({
   variant = "football",
@@ -19,8 +19,14 @@ export function NameColors({
     | "rugby"
     | "handball";
 }) {
-  const { state, setThemeColor, setName, setNameEditing, flushDraftSave } =
-    useJerseyColors();
+  const {
+    state,
+    setThemeColor,
+    setName,
+    setNameEditing,
+    flushDraftSave,
+    reset,
+  } = useJerseyColors();
 
   const setThemeColorCallback = (label: string, color: string | undefined) => {
     setThemeColor(label as keyof Theme, color);
@@ -29,13 +35,19 @@ export function NameColors({
   const needsMainColors =
     variant === "formula-1"
       ? !state.theme.primary
-      : !(state.theme.primary && state.theme.secondary);
+      : !(state.theme.primary && state.theme.secondary && state.theme.tertiary);
   // True once both colors are entered — collapse to compact view
   const hasMainColors = !needsMainColors;
+  const clearThemeAndReset = () => {
+    reset();
+    setThemeColor("primary", undefined);
+    setThemeColor("secondary", undefined);
+    setThemeColor("tertiary", undefined);
+  };
 
   return (
     <div className="flex flex-col bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md">
-      <div className="flex w-full justify-between items-center">
+      <div className="flex w-full justify-between items-center gap-2">
         <Input
           aria-label="Jersey name"
           placeholder={"Jersey name"}
@@ -53,6 +65,10 @@ export function NameColors({
             "text-3xl font-semibold truncate font-BarlowCondensed bg-transparent rounded-none ",
           )}
         />
+
+        <Button onPress={clearThemeAndReset} isIconOnly variant="ghost">
+          <MaterialIcon name="restart_alt" />
+        </Button>
       </div>
 
       <div
@@ -63,7 +79,7 @@ export function NameColors({
         }}
       >
         <div className="overflow-hidden">
-          <div className="flex gap-4 pt-5">
+          <div className="flex flex-col gap-4 pt-5">
             <ColorSelect
               field="primary"
               label="Primary"
@@ -71,13 +87,26 @@ export function NameColors({
               value={state.theme.primary}
               needsMainColors={needsMainColors}
             />
-            {variant !== "formula-1" ? (
+            {variant !== "formula-1" && variant !== "american-football" ? (
               <ColorSelect
                 field="secondary"
                 label="Secondary"
                 setColor={setThemeColorCallback}
                 value={state.theme.secondary}
                 needsMainColors={needsMainColors}
+              />
+            ) : null}
+            {variant !== "formula-1" && variant !== "american-football" ? (
+              <ColorSelect
+                field="tertiary"
+                label="Tertiary"
+                setColor={setThemeColorCallback}
+                value={state.theme.tertiary}
+                needsMainColors={needsMainColors}
+                defaultColors={{
+                  primary: state.theme.primary,
+                  secondary: state.theme.secondary,
+                }}
               />
             ) : null}
           </div>
@@ -98,28 +127,34 @@ export function NameColors({
               label="Primary"
               setColor={setThemeColorCallback}
               value={state.theme.primary}
+              defaultColors={{
+                secondary: state.theme.secondary,
+                tertiary: state.theme.tertiary,
+              }}
             />
-            {variant !== "formula-1" ? (
-              <div className="self-center hidden sm:flex">
-                <ColorSwitcher
-                  primaryColor={{
-                    field: "primary",
-                    color: state.theme.primary,
-                  }}
-                  secondaryColor={{
-                    field: "secondary",
-                    color: state.theme.secondary,
-                  }}
-                  setColor={setThemeColorCallback}
-                />
-              </div>
-            ) : null}
-            {variant !== "formula-1" ? (
+
+            {variant !== "formula-1" && variant !== "american-football" ? (
               <ColorPickerComponent
                 field="secondary"
                 label="Secondary"
                 setColor={setThemeColorCallback}
                 value={state.theme.secondary}
+                defaultColors={{
+                  primary: state.theme.primary,
+                  secondary: state.theme.tertiary,
+                }}
+              />
+            ) : null}
+            {variant !== "formula-1" && variant !== "american-football" ? (
+              <ColorPickerComponent
+                field="tertiary"
+                label="Tertiary"
+                setColor={setThemeColorCallback}
+                value={state.theme.tertiary}
+                defaultColors={{
+                  primary: state.theme.primary,
+                  secondary: state.theme.secondary,
+                }}
               />
             ) : null}
           </div>

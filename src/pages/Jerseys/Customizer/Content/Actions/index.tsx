@@ -10,7 +10,7 @@ import {
 } from "@heroui/react";
 import { MaterialIcon } from "@/components/MaterialIcon";
 import { UploadJerseyConfigButton } from "@/pages/Jerseys/UploadJerseyConfigButton";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { Preview } from "../../Preview";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 
@@ -41,6 +41,7 @@ export function Actions({
   isJerseyRoute: boolean;
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const breakpoint = useBreakpoint();
   const {
     reset,
@@ -64,13 +65,22 @@ export function Actions({
       });
     }
   };
+
+  const onReset = () => {
+    reset();
+    navigate(location.pathname + location.search + location.hash, {
+      replace: true,
+      state: null,
+    });
+  };
+
   return (
     <div className="flex gap-1 sm:gap-2 justify-end">
       {isJerseyRoute ? (
         <Tooltip>
           <Tooltip.Trigger>
             <Button
-              onPress={() => reset()}
+              onPress={onReset}
               isIconOnly
               isDisabled={!isConfigured}
               variant="ghost"
@@ -147,7 +157,7 @@ export function Actions({
             )}
             {drafts.length ? (
               <Dropdown.Item
-                className="flex justify-center border-t border-default-200 mt-1 pt-2"
+                className="flex justify-center  mt-1 pt-2"
                 key="clear-all-drafts"
                 textValue="Clear all drafts"
                 onPress={() => clearAllDrafts()}

@@ -68,11 +68,16 @@ export function ShirtText({
   const { state, effective, setFootballBack } = useJerseyColors();
   const defaultNameY = variant === "basketball" ? 13.5 : 11;
   const defaultNumberY = variant === "basketball" ? 25.5 : 21;
-  const backTextSeedColor =
-    state.theme.secondary ??
-    effective("baseColor") ??
-    state.theme.primary ??
-    "";
+  const backTextSeedColor = state.baseColor.enabled
+    ? (state.theme.tertiary ??
+      state.theme.secondary ??
+      state.theme.primary ??
+      effective("baseColor") ??
+      "")
+    : (state.theme.primary ??
+      state.theme.secondary ??
+      effective("baseColor") ??
+      "");
   const resolvedBackTextPickerColor =
     state.footballBackTextColor ||
     normalizeBackTextColor(backTextSeedColor) ||
@@ -329,6 +334,7 @@ export function ShirtText({
                 defaultColors={{
                   primary: state.theme.primary,
                   secondary: state.theme.secondary,
+                  tertiary: state.theme.tertiary,
                 }}
                 setColor={(_, color) =>
                   setFootballBack(true, {
@@ -374,6 +380,7 @@ export function ShirtText({
                     defaultColors={{
                       primary: state.theme.primary,
                       secondary: state.theme.secondary,
+                      tertiary: state.theme.tertiary,
                     }}
                     setColor={(_, color) =>
                       setFootballBack(true, {

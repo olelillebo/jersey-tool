@@ -57,24 +57,42 @@ export const Preset: React.FC<StripesTemplateSelectorProps> = ({
                 ? hockeyCustomItems
                 : customItems
             : [];
+  const baseColor = effective("baseColor");
+  const themePrimary = state.theme.primary;
+  const themeSecondary = state.theme.secondary;
   const stripePrimary = effective("stripePrimaryColor");
   const stripeSecondary = effective("stripeSecondaryColor");
   const stripeTertiary = effective("stripeTertiaryColor");
+  const stripeQuaternary = effective("stripeQuaternaryColor");
   const sideStripePrimary = effective("sideStripePrimaryColor");
   const sideStripeSecondary = effective("sideStripeSecondaryColor");
+  const selectedValue =
+    type === "horizontal"
+      ? state.horizontalStripesPreset || ""
+      : type === "vertical"
+        ? state.stripesPreset || ""
+        : type === "sidestripe"
+          ? state.sideStripePreset || ""
+          : type === "custom"
+            ? state.customShapePreset || ""
+            : "";
   const radioList = itemsToUse?.map((item) => {
+    const isSelectedItem = item.id === selectedValue;
     return (
       <Item
         key={item?.id}
         props={{
           value: item?.id,
         }}
+        baseColor={baseColor}
+        themePrimary={themePrimary}
+        themeSecondary={themeSecondary}
         stripePrimaryColor={stripePrimary}
         stripeSecondaryColor={stripeSecondary}
-        stripeTertiaryColor={stripeTertiary}
+        stripeTertiaryColor={isSelectedItem ? stripeTertiary : undefined}
+        stripeQuaternaryColor={isSelectedItem ? stripeQuaternary : undefined}
         sideStripePrimaryColor={sideStripePrimary}
         sideStripeSecondaryColor={sideStripeSecondary}
-        baseColor={state.baseColor?.value}
         type={type}
         variant={variant}
       ></Item>
@@ -84,17 +102,7 @@ export const Preset: React.FC<StripesTemplateSelectorProps> = ({
   return (
     <RadioGroup
       aria-label="Select a preset"
-      value={
-        type === "horizontal"
-          ? state.horizontalStripesPreset || ""
-          : type === "vertical"
-            ? state.stripesPreset || ""
-            : type === "sidestripe"
-              ? state.sideStripePreset || ""
-              : type === "custom"
-                ? state.customShapePreset || ""
-                : ""
-      }
+      value={selectedValue}
       onChange={(value) => {
         if (type === "horizontal") {
           setHorizontalStripeTemplate(value);

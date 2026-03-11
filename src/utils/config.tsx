@@ -24,8 +24,10 @@ export const KEYS: JerseyFieldKey[] = [
   "stripePrimaryColor",
   "stripeSecondaryColor",
   "stripeTertiaryColor",
+  "stripeQuaternaryColor",
   "sleeveStripePrimaryColor",
   "sleeveStripeSecondaryColor",
+  "sleeveStripeTertiaryColor",
   "sideStripePrimaryColor",
   "sideStripeSecondaryColor",
 ];
@@ -104,7 +106,7 @@ export const jerseyParts = [
     },
     primaryKey: {
       field: "baseColor" as JerseyFieldKey,
-      label: "Primary",
+      label: "Fill",
     },
   },
   {
@@ -156,7 +158,7 @@ export const jerseyParts = [
     },
     primaryKey: {
       field: "shoulderPanelColor" as JerseyFieldKey,
-      label: "Primary",
+      label: "Fill",
     },
   },
   {
@@ -226,7 +228,7 @@ export const jerseyParts = [
     },
     primaryKey: {
       field: "stripePrimaryColor" as JerseyFieldKey,
-      label: "Primary",
+      label: "Fill",
     },
   },
 ];
@@ -241,6 +243,9 @@ const clonePart = <T extends (typeof jerseyParts)[number]>(part: T): T => ({
     : part.secondaryKey,
   ...("tertiaryKey" in part && part.tertiaryKey
     ? { tertiaryKey: { ...part.tertiaryKey } }
+    : {}),
+  ...("quaternaryKey" in part && part.quaternaryKey
+    ? { quaternaryKey: { ...part.quaternaryKey } }
     : {}),
 });
 
@@ -285,30 +290,36 @@ const hockeySleeveStripePart = {
   keys: [
     "sleeveStripePrimaryColor",
     "sleeveStripeSecondaryColor",
+    "sleeveStripeTertiaryColor",
   ] as JerseyFieldKey[],
   baseProps: {
     baseColor: "#FFFFFF",
-    sleeveStripePrimaryColor: "#9D7D2D",
+    sleeveStripePrimaryColor: "#000000",
     sleeveStripeSecondaryColor: "#FFFFFF",
+    sleeveStripeTertiaryColor: "#000000",
   },
   primaryKey: {
     field: "sleeveStripePrimaryColor" as JerseyFieldKey,
-    label: "Primary",
+    label: "Top",
   },
   secondaryKey: {
     field: "sleeveStripeSecondaryColor" as JerseyFieldKey,
-    label: "Secondary",
+    label: "Middle",
+  },
+  tertiaryKey: {
+    field: "sleeveStripeTertiaryColor" as JerseyFieldKey,
+    label: "Bottom",
   },
 };
 
 export const hockeyJerseyParts = [
-  ...jerseyParts.filter(
-    (part) =>
-      part.label !== "Shoulder Panel" &&
-      part.label !== "Sleeve Detail" &&
-      part.label !== "Custom Shape",
-  ),
+  ...jerseyParts.filter((part) => part.label === "Solid Color"),
+  ...jerseyParts.filter((part) => part.label === "Sleeves"),
+  ...jerseyParts.filter((part) => part.label === "Sleeve Detail"),
   hockeySleeveStripePart,
+  ...jerseyParts.filter((part) => part.label === "Collar"),
+  ...jerseyParts.filter((part) => part.label === "Vertical Stripes"),
+  ...jerseyParts.filter((part) => part.label === "Horizontal Stripes"),
   ...jerseyParts.filter((part) => part.label === "Custom Shape"),
 ].map((part) =>
   part.label === "Sleeves"
@@ -316,8 +327,8 @@ export const hockeyJerseyParts = [
         ...part,
         baseProps: {
           ...part.baseProps,
-          leftSleeveColor: "#BDBDBD",
-          rightSleeveColor: "#BDBDBD",
+          leftSleeveColor: "#000000",
+          rightSleeveColor: "#000000",
         },
       }
     : part.label === "Collar"
@@ -341,27 +352,50 @@ export const hockeyJerseyParts = [
         : part.label === "Horizontal Stripes"
           ? {
               ...part,
+              keys: [
+                "stripePrimaryColor",
+                "stripeSecondaryColor",
+                "stripeTertiaryColor",
+                "stripeQuaternaryColor",
+              ] as JerseyFieldKey[],
+              primaryKey: {
+                field: "stripePrimaryColor" as JerseyFieldKey,
+                label: "Bottom Stripe",
+              },
+              secondaryKey: {
+                field: "stripeSecondaryColor" as JerseyFieldKey,
+                label: "Center Stripe",
+              },
               baseProps: {
                 ...part.baseProps,
                 horizontalStripesPreset:
                   "hockeyTripleBottomStripe" as HorizontalStripePreset,
                 stripeTertiaryColor: "#1C3997",
+                stripeQuaternaryColor: "#1C3997",
               },
               tertiaryKey: {
                 field: "stripeTertiaryColor" as JerseyFieldKey,
-                label: "Bottom",
+                label: "Top Stripe",
+              },
+              quaternaryKey: {
+                field: "stripeQuaternaryColor" as JerseyFieldKey,
+                label: "Bottom Shirt",
               },
             }
           : part.label === "Custom Shape"
             ? {
                 ...part,
+                keys: [
+                  "stripePrimaryColor",
+                  "stripeTertiaryColor",
+                ] as JerseyFieldKey[],
                 baseProps: {
                   ...part.baseProps,
                   stripeTertiaryColor: "#1C3997",
                 },
                 tertiaryKey: {
                   field: "stripeTertiaryColor" as JerseyFieldKey,
-                  label: "Bottom",
+                  label: "Bottom Fill",
                 },
               }
             : part,

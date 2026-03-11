@@ -1,7 +1,7 @@
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 import Base from "@/components/Jersey/base";
 import { classNames } from "@/utils/utils";
-import { darken } from "@/utils/colorFunctions";
+import { darken, getContrastingShade } from "@/utils/colorFunctions";
 import { Radio, type RadioProps } from "@heroui/react";
 import type {
   StripePreset,
@@ -14,12 +14,15 @@ interface ItemInterface {
   props: RadioProps;
   label?: string | undefined;
   title?: string | undefined;
+  baseColor?: string | undefined;
+  themePrimary?: string | undefined;
+  themeSecondary?: string | undefined;
   stripePrimaryColor?: string | undefined;
   stripeSecondaryColor?: string | undefined;
   stripeTertiaryColor?: string | undefined;
+  stripeQuaternaryColor?: string | undefined;
   sideStripePrimaryColor?: string | undefined;
   sideStripeSecondaryColor?: string | undefined;
-  baseColor?: string | undefined;
   type: "vertical" | "horizontal" | "custom" | "sidestripe";
   variant?:
     | "football"
@@ -36,17 +39,41 @@ const Item: React.FC<ItemInterface> = ({
   props,
   label,
   title,
+  baseColor,
+  themePrimary,
+  themeSecondary,
   stripePrimaryColor,
   stripeSecondaryColor,
   stripeTertiaryColor,
+  stripeQuaternaryColor,
   sideStripePrimaryColor,
   sideStripeSecondaryColor,
-  baseColor,
   type,
   variant = "football",
 }) => {
   const breakpoint = useBreakpoint();
   const { value } = props;
+  const previewBaseColor =
+    baseColor ?? (variant === "hockey" ? "#F3F4F6" : "#FFFFFF");
+  const previewPrimary =
+    stripePrimaryColor ?? themePrimary ?? themeSecondary ?? "#303030";
+  const previewSecondary =
+    stripeSecondaryColor ?? themeSecondary ?? themePrimary ?? "#FFFFFF";
+  const previewBaseShade = getContrastingShade(previewBaseColor, 0.2);
+  const previewTertiary =
+    variant === "hockey" && type === "custom" && value === "hockeyThinArrowFill"
+      ? stripeTertiaryColor ?? previewBaseShade
+      : stripeTertiaryColor ?? previewPrimary;
+  const previewQuaternary =
+    variant === "hockey" &&
+    type === "horizontal" &&
+    (value === "hockeyTripleBottomStripeShade" ||
+      value === "hockeyBottomStripeShade")
+      ? stripeQuaternaryColor ?? previewBaseShade
+      : stripeQuaternaryColor ?? darken(previewPrimary, 0.2);
+  const previewSidePrimary = sideStripePrimaryColor ?? previewPrimary;
+  const previewSideSecondary =
+    sideStripeSecondaryColor ?? themeSecondary ?? previewSidePrimary;
 
   return (
     <Radio
@@ -60,7 +87,7 @@ const Item: React.FC<ItemInterface> = ({
     >
       <Radio.Content>
         <Base
-          baseColor={baseColor || "#FFFFFF"}
+          baseColor={previewBaseColor}
           stripesPreset={
             type === "vertical" ? (value as StripePreset) : undefined
           }
@@ -75,18 +102,12 @@ const Item: React.FC<ItemInterface> = ({
           sideStripePreset={
             type === "sidestripe" ? (value as SideStripePreset) : undefined
           }
-          stripePrimaryColor={stripePrimaryColor || "#274FD1"}
-          stripeSecondaryColor={stripeSecondaryColor || "#63C7FF"}
-          stripeTertiaryColor={
-            stripeTertiaryColor ||
-            (variant === "hockey" && stripePrimaryColor
-              ? darken(stripePrimaryColor, 0.2)
-              : undefined)
-          }
-          sideStripePrimaryColor={sideStripePrimaryColor || "#274FD1"}
-          sideStripeSecondaryColor={
-            sideStripeSecondaryColor || sideStripePrimaryColor || "#274FD1"
-          }
+          stripePrimaryColor={previewPrimary}
+          stripeSecondaryColor={previewSecondary}
+          stripeTertiaryColor={previewTertiary}
+          stripeQuaternaryColor={previewQuaternary}
+          sideStripePrimaryColor={previewSidePrimary}
+          sideStripeSecondaryColor={previewSideSecondary}
           size={breakpoint == "sm" ? "xsmall" : "small"}
           variant={variant}
         />

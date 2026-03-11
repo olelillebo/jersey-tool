@@ -14,7 +14,7 @@ import {
 } from "@/types/types";
 import { PathIf } from "@/components/PathIf";
 import { RectIf } from "@/components/RectIf";
-import { darken } from "@/utils/colorFunctions";
+import { darken, getContrastingShade } from "@/utils/colorFunctions";
 import { toast } from "@heroui/react";
 import type { JerseyConfig } from "./jerseyConfig";
 export function classNames(...classes: string[]) {
@@ -24,7 +24,28 @@ export function classNames(...classes: string[]) {
 export function deriveDefault(
   field: JerseyFieldKey,
   theme: Theme,
+  baseEnabled = false,
 ): string | undefined {
+  if (baseEnabled) {
+    if (
+      field === "stripePrimaryColor" ||
+      field === "sleeveStripePrimaryColor" ||
+      field === "sleeveStripeTertiaryColor" ||
+      field === "sideStripePrimaryColor"
+    ) {
+      return theme.secondary ?? theme.primary;
+    }
+    if (
+      field === "stripeSecondaryColor" ||
+      field === "sleeveStripeSecondaryColor" ||
+      field === "sideStripeSecondaryColor"
+    ) {
+      return theme.tertiary ?? theme.secondary ?? theme.primary;
+    }
+    if (DEFAULT_SOURCE[field] === "secondary") {
+      return theme.tertiary ?? theme.secondary;
+    }
+  }
   const which = DEFAULT_SOURCE[field];
   return theme[which];
 }
@@ -41,32 +62,50 @@ export function toBaseProps(
     | "rugby"
     | "handball" = "football",
 ) {
+  const fieldState = (k: JerseyFieldKey) =>
+    state[k] ?? { value: undefined, enabled: false };
   const eff = (k: JerseyFieldKey) =>
-    state[k].enabled
-      ? (state[k].value ?? deriveDefault(k, state.theme))
+    fieldState(k).enabled
+      ? (fieldState(k).value ??
+        deriveDefault(k, state.theme, fieldState("baseColor").enabled))
       : undefined;
   const baseColor = eff("baseColor");
   const footballBackAutoTextSeedColor =
-    state.theme.secondary ?? baseColor ?? state.theme.primary;
+    fieldState("baseColor").enabled
+      ? state.theme.tertiary ??
+        state.theme.secondary ??
+        state.theme.primary ??
+        baseColor
+      : state.theme.primary ?? state.theme.secondary ?? baseColor;
+  const hockeyBaseShade =
+    variant === "hockey"
+      ? getContrastingShade(baseColor ?? "#FFFFFF", 0.2)
+      : undefined;
   const hockeySleeveDefault =
     variant === "hockey"
-      ? darken(baseColor ?? state.theme.primary ?? "#FFFFFF", 0.2)
+      ? hockeyBaseShade
       : undefined;
   return {
     baseColor,
     rightSleeveColor:
-      variant === "hockey" && state.rightSleeveColor.enabled
-        ? (state.rightSleeveColor.value ?? hockeySleeveDefault)
+      variant === "hockey" && fieldState("rightSleeveColor").enabled
+        ? (fieldState("rightSleeveColor").value ?? hockeySleeveDefault)
         : eff("rightSleeveColor"),
-    leftSleeveDetailColor: eff("leftSleeveDetailColor"),
+    leftSleeveDetailColor:
+      variant === "hockey" && fieldState("leftSleeveDetailColor").enabled
+        ? (fieldState("leftSleeveDetailColor").value ?? hockeySleeveDefault)
+        : eff("leftSleeveDetailColor"),
     leftSleeveColor:
-      variant === "hockey" && state.leftSleeveColor.enabled
-        ? (state.leftSleeveColor.value ?? hockeySleeveDefault)
+      variant === "hockey" && fieldState("leftSleeveColor").enabled
+        ? (fieldState("leftSleeveColor").value ?? hockeySleeveDefault)
         : eff("leftSleeveColor"),
-    rightSleeveDetailColor: eff("rightSleeveDetailColor"),
+    rightSleeveDetailColor:
+      variant === "hockey" && fieldState("rightSleeveDetailColor").enabled
+        ? (fieldState("rightSleeveDetailColor").value ?? hockeySleeveDefault)
+        : eff("rightSleeveDetailColor"),
     neckCircleColor:
-      variant === "formula-1" && state.neckCircleColor.enabled
-        ? (state.neckCircleColor.value ??
+      variant === "formula-1" && fieldState("neckCircleColor").enabled
+        ? (fieldState("neckCircleColor").value ??
           darken(baseColor ?? state.theme.primary ?? "#FFFFFF", 0.2))
         : eff("neckCircleColor"),
     leftNeckCircleColor: eff("leftNeckCircleColor"),
@@ -74,14 +113,23 @@ export function toBaseProps(
     stripePrimaryColor: eff("stripePrimaryColor"),
     stripeSecondaryColor: eff("stripeSecondaryColor"),
     stripeTertiaryColor:
-      variant === "hockey" && state.stripeTertiaryColor.enabled
-        ? (state.stripeTertiaryColor.value ??
-          (eff("stripePrimaryColor")
-            ? darken(eff("stripePrimaryColor")!, 0.2)
-            : undefined))
+      variant === "hockey" &&
+      state.customShapePreset === "hockeyThinArrowFill" &&
+      fieldState("stripeTertiaryColor").enabled
+        ? (fieldState("stripeTertiaryColor").value ??
+          hockeyBaseShade)
         : eff("stripeTertiaryColor"),
+    stripeQuaternaryColor:
+      variant === "hockey" &&
+      (state.horizontalStripesPreset === "hockeyTripleBottomStripeShade" ||
+        state.horizontalStripesPreset === "hockeyBottomStripeShade") &&
+      fieldState("stripeQuaternaryColor").enabled
+        ? (fieldState("stripeQuaternaryColor").value ??
+          hockeyBaseShade)
+        : eff("stripeQuaternaryColor"),
     sleeveStripePrimaryColor: eff("sleeveStripePrimaryColor"),
     sleeveStripeSecondaryColor: eff("sleeveStripeSecondaryColor"),
+    sleeveStripeTertiaryColor: eff("sleeveStripeTertiaryColor"),
     sideStripePrimaryColor: eff("sideStripePrimaryColor"),
     sideStripeSecondaryColor: eff("sideStripeSecondaryColor"),
     customOverlayEnabled: state.customOverlayEnabled,
@@ -130,6 +178,7 @@ export function configToState(
 ): Partial<JerseyColorState> {
   const themePrimary = cfg?.primary ?? undefined;
   const themeSecondary = cfg?.secondary ?? undefined;
+  const themeTertiary = cfg?.tertiary ?? undefined;
   const stripesPreset =
     typeof cfg?.stripesPreset === "string"
       ? (cfg!.stripesPreset as StripePreset)
@@ -161,6 +210,7 @@ export function configToState(
     theme: {
       primary: coerce(themePrimary),
       secondary: coerce(themeSecondary),
+      tertiary: coerce(themeTertiary),
     },
     customOverlayEnabled: cfg?.customOverlayEnabled ?? false,
     customOverlaySvg: coerce(cfg?.customOverlaySvg),
@@ -1129,7 +1179,7 @@ export function renderCustomShapePreset(
               d="M4.99948 35L16.9995 26L28.9995 35V38H16.9995H4.99948V35Z"
               fill={
                 stripeTertiaryColor ??
-                (baseColor ? darken(baseColor, 0.2) : undefined)
+                (baseColor ? getContrastingShade(baseColor, 0.2) : undefined)
               }
             />
             <PathIf
@@ -1268,9 +1318,11 @@ export function renderCustomShapePreset(
 export function renderHorizontalStripePreset(
   preset: HorizontalStripePreset,
   {
+    baseColor,
     stripePrimaryColor,
     stripeSecondaryColor,
     stripeTertiaryColor,
+    stripeQuaternaryColor,
   }: StripeColors,
   variant:
     | "football"
@@ -1305,7 +1357,7 @@ export function renderHorizontalStripePreset(
               y="28"
               width="18"
               height="2"
-              fill={stripePrimaryColor}
+              fill={stripeTertiaryColor ?? stripePrimaryColor}
             />
           </>
         );
@@ -1318,9 +1370,11 @@ export function renderHorizontalStripePreset(
               width="18"
               height="4"
               fill={
-                stripeTertiaryColor ??
-                (stripePrimaryColor
-                  ? darken(stripePrimaryColor, 0.2)
+                stripeQuaternaryColor ??
+                (baseColor
+                  ? getContrastingShade(baseColor, 0.2)
+                  : stripePrimaryColor
+                    ? darken(stripePrimaryColor, 0.2)
                   : undefined)
               }
             />
@@ -1343,7 +1397,7 @@ export function renderHorizontalStripePreset(
               y="28"
               width="18"
               height="2"
-              fill={stripePrimaryColor}
+              fill={stripeTertiaryColor ?? stripePrimaryColor}
             />
           </>
         );
@@ -1356,9 +1410,11 @@ export function renderHorizontalStripePreset(
               width="18"
               height="4"
               fill={
-                stripeTertiaryColor ??
-                (stripePrimaryColor
-                  ? darken(stripePrimaryColor, 0.2)
+                stripeQuaternaryColor ??
+                (baseColor
+                  ? getContrastingShade(baseColor, 0.2)
+                  : stripePrimaryColor
+                    ? darken(stripePrimaryColor, 0.2)
                   : undefined)
               }
             />
@@ -1779,6 +1835,7 @@ export function downloadJson(state: JerseyColorState) {
     sport: state.sport,
     primary: state.theme.primary || "",
     secondary: state.theme.secondary || "",
+    tertiary: state.theme.tertiary || "",
     stripesPreset: state.stripesPreset || "",
     horizontalStripesPreset: state.horizontalStripesPreset || "",
     customShapePreset: state.customShapePreset || "",

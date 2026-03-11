@@ -18,6 +18,7 @@ type ColorPickerProps = {
   defaultColors?: {
     primary?: string;
     secondary?: string;
+    tertiary?: string;
   };
   setColor?: (label: string, color: string | undefined) => void;
   onlyPicker?: boolean;
@@ -48,7 +49,18 @@ const normalizeHex = (input: string) => {
     return `#${c[1]}${c[1]}${c[2]}${c[2]}${c[3]}${c[3]}`;
   }
   if (/^#[\da-f]{6}$/i.test(withHash)) return withHash.toUpperCase();
-  if (/^#[\da-f]{8}$/i.test(withHash)) return withHash.slice(0, 7).toUpperCase();
+  if (/^#[\da-f]{8}$/i.test(withHash))
+    return withHash.slice(0, 7).toUpperCase();
+  return undefined;
+};
+
+const normalizeHexForTyping = (input: string) => {
+  const trimmed = input.trim();
+  if (!trimmed) return undefined;
+  const withHash = trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
+  if (/^#[\da-f]{6}$/i.test(withHash)) return withHash.toUpperCase();
+  if (/^#[\da-f]{8}$/i.test(withHash))
+    return withHash.slice(0, 7).toUpperCase();
   return undefined;
 };
 
@@ -73,19 +85,21 @@ const ColorPickerComponent: React.FC<ColorPickerProps> = ({
   const controlledValue = value ?? "";
   const pickerValue =
     normalizeHex(controlledValue) ??
+    normalizeHex(defaultColors?.tertiary ?? "") ??
     normalizeHex(defaultColors?.primary ?? "") ??
     normalizeHex(defaultColors?.secondary ?? "") ??
     "#D13DD9";
   const activePickerValue = isOpen ? (draftColor ?? pickerValue) : pickerValue;
 
-  const presets =
-    defaultColors?.primary && defaultColors?.secondary
-      ? [defaultColors.primary, defaultColors.secondary, ...colorPresets]
-      : defaultColors?.primary
-        ? [defaultColors.primary, ...colorPresets]
-        : defaultColors?.secondary
-          ? [defaultColors.secondary, ...colorPresets]
-          : colorPresets;
+  const presets = [
+    defaultColors?.primary,
+    defaultColors?.secondary,
+    defaultColors?.tertiary,
+    ...colorPresets,
+  ].filter(
+    (preset, index, all): preset is string =>
+      !!preset && all.indexOf(preset) === index,
+  );
 
   useEffect(() => {
     if (!isOpen) {
@@ -147,9 +161,9 @@ const ColorPickerComponent: React.FC<ColorPickerProps> = ({
             <MaterialIcon name="colorize" />
           ) : (
             <>
-              <ColorSwatch size="md" color={controlledValue || undefined} />
+              <ColorSwatch size="sm" color={controlledValue || undefined} />
               <div className="flex flex-col items-start">
-                <Label className="text-sm font-semibold">{label}</Label>
+                <Label className="text-xs font-semibold">{label}</Label>
                 <Label className="text-xs text-gray-500 dark:text-gray-300">
                   {pickerValue}
                 </Label>
@@ -228,7 +242,7 @@ const ColorPickerComponent: React.FC<ColorPickerProps> = ({
                   onChange={(e) => {
                     const nextValue = e.target.value;
                     setInputValue(nextValue);
-                    const normalized = normalizeHex(nextValue);
+                    const normalized = normalizeHexForTyping(nextValue);
                     if (normalized) {
                       setDraftColor(normalized);
                       commitColor(normalized);

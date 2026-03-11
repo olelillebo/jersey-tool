@@ -50,7 +50,7 @@ export function Content({
   const needsMainColors =
     variant === "formula-1"
       ? !state.theme.primary
-      : !(state.theme.primary && state.theme.secondary);
+      : !(state.theme.primary && state.theme.secondary && state.theme.tertiary);
   // True once both colors are entered — collapse to compact view
 
   return (
