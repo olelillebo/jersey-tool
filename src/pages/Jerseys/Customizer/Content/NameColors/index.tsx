@@ -133,7 +133,7 @@ export function NameColors({
               }}
             />
 
-            {variant !== "formula-1" && variant !== "american-football" ? (
+            {variant !== "formula-1" ? (
               <ColorPickerComponent
                 field="secondary"
                 label="Secondary"
